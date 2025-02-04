@@ -26,7 +26,6 @@ class PotentialClientViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def convert_to_active(self, request, pk=None):
-        """Перевод потенциального клиента в активные"""
         potential_client = get_object_or_404(PotentialClient, pk=pk)
         contract_id = request.data.get('contract_id')
         contract = get_object_or_404(Contract, pk=contract_id)
@@ -35,7 +34,7 @@ class PotentialClientViewSet(viewsets.ModelViewSet):
             potential_client=potential_client,
             contract=contract
         )
-        potential_client.delete()  # Удаляем потенциального клиента после перевода
+        potential_client.delete()
 
         return Response(ActiveClientSerializer(active_client).data, status=status.HTTP_201_CREATED)
 
