@@ -1,26 +1,14 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import (
-    ServiceViewSet, AdvertisingCampaignViewSet, PotentialClientViewSet,
-    ContractViewSet, ActiveClientViewSet
-)
-from django.urls import path, include
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView, TokenRefreshView
-)
+from .views import service_list, service_detail, service_create, service_update, service_delete
+from django.contrib import admin
+
 
 urlpatterns = [
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/', include(router.urls)),
-]
-
-
-router = DefaultRouter()
-router.register(r'services', ServiceViewSet)
-router.register(r'campaigns', AdvertisingCampaignViewSet)
-router.register(r'potential_clients', PotentialClientViewSet)
-router.register(r'contracts', ContractViewSet)
-router.register(r'active_clients', ActiveClientViewSet)
-
+    path('admin/', admin.site.urls),
+    path('', include('crm_app.urls')),
+    path('services/', service_list, name='service_list'),
+    path('services/<int:pk>/', service_detail, name='service_detail'),
+    path('services/create/', service_create, name='service_create'),
+    path('services/<int:pk>/edit/', service_update, name='service_update'),
+    path('services/<int:pk>/delete/', service_delete, name='service_delete'),
 ]

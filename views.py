@@ -1,50 +1,50 @@
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from django.shortcuts import get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Service, Campaign, PotentialClient, Contract, ActiveClient
+from .forms import ServiceForm, CampaignForm, PotentialClientForm, ContractForm, ActiveClientForm
+from django.db.models import Count, Sum
+from django.shortcuts import render
 
-from .models import Service, AdvertisingCampaign, PotentialClient, Contract, ActiveClient
-from .serializers import (
-    ServiceSerializer, AdvertisingCampaignSerializer,
-    PotentialClientSerializer, ContractSerializer, ActiveClientSerializer
-)
+def campaign_statistics(request):
+    stats = Campaign.objects.annotate(
+        total_clients=Count('potentialclient'),
+        converted_clients=Count('potentialclient__activeclient'),
+        total_revenue=Sum('potentialclient__activeclient__contract__amount')
+    ).values('name', 'total_clients', 'converted_clients', 'total_revenue')
 
+    return render(request, 'statistics/campaign_stats.html', {'stats': stats})
 
-class ServiceViewSet(viewsets.ModelViewSet):
-    queryset = Service.objects.all()
-    serializer_class = ServiceSerializer
+def service_list(request):
+    services = Service.objects.all()
+    return render(request, 'services/service_list.html', {'services': services})
 
+def service_detail(request, pk):
+    service = get_object_or_404(Service, pk=pk)
+    return render(request, 'services/service_detail.html', {'service': service})
 
-class AdvertisingCampaignViewSet(viewsets.ModelViewSet):
-    queryset = AdvertisingCampaign.objects.all()
-    serializer_class = AdvertisingCampaignSerializer
+def service_create(request):
+    if request.method == 'POST':
+        form = ServiceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('service_list')
+    else:
+        form = ServiceForm()
+    return render(request, 'services/service_form.html', {'form': form})
 
+def service_update(request, pk):
+    service = get_object_or_404(Service, pk=pk)
+    if request.method == 'POST':
+        form = ServiceForm(request.POST, instance=service)
+        if form.is_valid():
+            form.save()
+            return redirect('service_list')
+    else:
+        form = ServiceForm(instance=service)
+    return render(request, 'services/service_form.html', {'form': form})
 
-class PotentialClientViewSet(viewsets.ModelViewSet):
-    queryset = PotentialClient.objects.all()
-    serializer_class = PotentialClientSerializer
-
-    @action(detail=True, methods=['post'])
-    def convert_to_active(self, request, pk=None):
-        """Перевод потенциального клиента в активные"""
-        potential_client = get_object_or_404(PotentialClient, pk=pk)
-        contract_id = request.data.get('contract_id')
-        contract = get_object_or_404(Contract, pk=contract_id)
-
-        active_client = ActiveClient.objects.create(
-            potential_client=potential_client,
-            contract=contract
-        )
-        potential_client.delete()  # Удаляем потенциального клиента после перевода
-
-        return Response(ActiveClientSerializer(active_client).data, status=status.HTTP_201_CREATED)
-
-
-class ContractViewSet(viewsets.ModelViewSet):
-    queryset = Contract.objects.all()
-    serializer_class = ContractSerializer
-
-
-class ActiveClientViewSet(viewsets.ModelViewSet):
-    queryset = ActiveClient.objects.all()
-    serializer_class = ActiveClientSerializer
+def service_delete(request, pk):
+    service = get_object_or_404(Service, pk=pk)
+    if request.method == 'POST':
+        service.delete()
+        return redirect('service_list')
+    return render(request, 'services/service_confirm_delete.html', {'service': service})

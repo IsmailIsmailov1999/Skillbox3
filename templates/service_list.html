@@ -1,0 +1,8 @@
+{% for service in services %}
+    <p><a href="{% url 'service_detail' service.pk %}">{{ service.name }}</a></p>
+    <form action="{% url 'service_delete' service.pk %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Удалить</button>
+    </form>
+{% endfor %}
+<a href="{% url 'service_create' %}">Создать услугу</a>
