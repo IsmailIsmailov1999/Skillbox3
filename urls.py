@@ -1,14 +1,13 @@
-from django.urls import path, include
-from .views import service_list, service_detail, service_create, service_update, service_delete
+# urls.py
 from django.contrib import admin
-
+from django.urls import path, include
+from .views import ClientListView, ClientCreateView, CampaignListView, CampaignCreateView
 
 urlpatterns = [
+    path('clients/', ClientListView.as_view(), name='client_list'),
+    path('clients/create/', ClientCreateView.as_view(), name='client_create'),
+    path('campaigns/', CampaignListView.as_view(), name='campaign_list'),
+    path('campaigns/create/', CampaignCreateView.as_view(), name='campaign_create'),
     path('admin/', admin.site.urls),
-    path('', include('crm_app.urls')),
-    path('services/', service_list, name='service_list'),
-    path('services/<int:pk>/', service_detail, name='service_detail'),
-    path('services/create/', service_create, name='service_create'),
-    path('services/<int:pk>/edit/', service_update, name='service_update'),
-    path('services/<int:pk>/delete/', service_delete, name='service_delete'),
+    path('', include('crm.urls')),
 ]

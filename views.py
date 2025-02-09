@@ -1,50 +1,44 @@
+# views.py
+
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Service, Campaign, PotentialClient, Contract, ActiveClient
-from .forms import ServiceForm, CampaignForm, PotentialClientForm, ContractForm, ActiveClientForm
-from django.db.models import Count, Sum
-from django.shortcuts import render
+from django.views import View
+from .models import Client, Service, Campaign
+from .forms import ClientForm, ServiceForm, CampaignForm
 
-def campaign_statistics(request):
-    stats = Campaign.objects.annotate(
-        total_clients=Count('potentialclient'),
-        converted_clients=Count('potentialclient__activeclient'),
-        total_revenue=Sum('potentialclient__activeclient__contract__amount')
-    ).values('name', 'total_clients', 'converted_clients', 'total_revenue')
+# Представление для списка клиентов
+class ClientListView(View):
+    def get(self, request):
+        clients = Client.objects.all()
+        return render(request, 'client_list.html', {'clients': clients})
 
-    return render(request, 'statistics/campaign_stats.html', {'stats': stats})
+# Представление для создания клиента
+class ClientCreateView(View):
+    def get(self, request):
+        form = ClientForm()
+        return render(request, 'client_form.html', {'form': form})
 
-def service_list(request):
-    services = Service.objects.all()
-    return render(request, 'services/service_list.html', {'services': services})
-
-def service_detail(request, pk):
-    service = get_object_or_404(Service, pk=pk)
-    return render(request, 'services/service_detail.html', {'service': service})
-
-def service_create(request):
-    if request.method == 'POST':
-        form = ServiceForm(request.POST)
+    def post(self, request):
+        form = ClientForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('service_list')
-    else:
-        form = ServiceForm()
-    return render(request, 'services/service_form.html', {'form': form})
+            return redirect('client_list')
+        return render(request, 'client_form.html', {'form': form})
 
-def service_update(request, pk):
-    service = get_object_or_404(Service, pk=pk)
-    if request.method == 'POST':
-        form = ServiceForm(request.POST, instance=service)
+# Представление для списка рекламных кампаний
+class CampaignListView(View):
+    def get(self, request):
+        campaigns = Campaign.objects.all()
+        return render(request, 'campaign_list.html', {'campaigns': campaigns})
+
+# Представление для создания рекламной кампании
+class CampaignCreateView(View):
+    def get(self, request):
+        form = CampaignForm()
+        return render(request, 'campaign_form.html', {'form': form})
+
+    def post(self, request):
+        form = CampaignForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('service_list')
-    else:
-        form = ServiceForm(instance=service)
-    return render(request, 'services/service_form.html', {'form': form})
-
-def service_delete(request, pk):
-    service = get_object_or_404(Service, pk=pk)
-    if request.method == 'POST':
-        service.delete()
-        return redirect('service_list')
-    return render(request, 'services/service_confirm_delete.html', {'service': service})
+            return redirect('campaign_list')
+        return render(request, 'campaign_form.html', {'form': form})
